@@ -30,7 +30,7 @@ async function getFacultyData() {
     };
   } catch (error) {
     console.error("Error fetching faculty data:", error);
-    return { faculty: { data: [] }, departments: { data: [] } };
+    return { faculty: { data: [], included: [] }, departments: { data: [], included: [] } };
   }
 }
 
@@ -43,10 +43,45 @@ function createSlug(name: string) {
     .replace(/\s+/g, "-");
 }
 
-export const revalidate = 0;
+export default function FacultyPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function FacultyPage() {
-  const data = await getFacultyData();
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const facultyData = await getFacultyData();
+        setData(facultyData);
+      } catch (error) {
+        console.error("Error loading faculty data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading faculty...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || !data.faculty || data.faculty.data.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">No faculty members available at this time.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Get unique departments
   const departments = Array.from(
