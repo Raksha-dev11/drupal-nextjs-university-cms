@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
@@ -18,20 +21,56 @@ async function getCourses() {
     );
     
     if (!res.ok) {
-      console.error('Failed to fetch courses:', res.status, res.statusText);
-      return { data: [] };
+      throw new Error(`HTTP error! status: ${res.status}`);
     }
     
     const data = await res.json();
     return data;
   } catch (error) {
-    console.error('Error fetching courses:', error);
+    console.error("Error fetching courses:", error);
     return { data: [] };
   }
 }
 
-export default async function CoursesPage() {
-  const data = await getCourses();
+export default function CoursesPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const coursesData = await getCourses();
+        setData(coursesData);
+      } catch (error) {
+        console.error("Error loading courses data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Unable to load courses data.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="w-full p-6 bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 min-h-screen">
