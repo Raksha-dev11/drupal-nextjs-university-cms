@@ -71,7 +71,7 @@ export default function DepartmentsPage() {
         </h1>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {data.data?.map((dept: any) => (
+          {data?.data?.map((dept: any) => (
             <Link
               key={dept.id}
               href={`/departments/${createSlug(dept.attributes.name)}`}
@@ -85,11 +85,9 @@ export default function DepartmentsPage() {
                   {dept.attributes.name}
                 </h2>
               </div>
-              
               <p className="text-gray-600 mb-4">
                 Explore programs, faculty, and courses in the {dept.attributes.name} department.
               </p>
-              
               <div className="flex items-center text-pink-600 font-semibold group-hover:text-pink-700 transition-colors">
                 <span>View Department</span>
                 <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
