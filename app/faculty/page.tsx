@@ -43,6 +43,8 @@ function createSlug(name: string) {
     .replace(/\s+/g, "-");
 }
 
+export const revalidate = 0;
+
 export default async function FacultyPage() {
   const data = await getFacultyData();
 
