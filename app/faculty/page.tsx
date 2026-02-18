@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-const DRUPAL_URL = "http://localhost:8080";
+const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
 async function getFacultyData() {
   try {
     const [facultyRes, departmentsRes] = await Promise.all([
-      fetch(`${DRUPAL_URL}/drupal_headless/web/jsonapi/node/faculty_`, { cache: "no-store" }),
-      fetch(`${DRUPAL_URL}/drupal_headless/web/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
+      fetch(`${DRUPAL_URL}/jsonapi/node/faculty_`, { cache: "no-store" }),
+      fetch(`${DRUPAL_URL}/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
     ]);
 
     const facultyData = await facultyRes.json();

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const DRUPAL_URL = "http://localhost:8080";
+const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
 function createSlug(title: string) {
   return title
@@ -11,12 +11,23 @@ function createSlug(title: string) {
 }
 
 async function getCourses() {
-  const res = await fetch(
-    `${DRUPAL_URL}/drupal_headless/web/jsonapi/node/course?include=field_faculty,field_departments`,
-    { cache: "no-store" }
-  );
-
-  return res.json();
+  try {
+    const res = await fetch(
+      `${DRUPAL_URL}/jsonapi/node/course`,
+      { cache: "no-store" }
+    );
+    
+    if (!res.ok) {
+      console.error('Failed to fetch courses:', res.status, res.statusText);
+      return { data: [] };
+    }
+    
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    return { data: [] };
+  }
 }
 
 export default async function CoursesPage() {
@@ -35,61 +46,40 @@ export default async function CoursesPage() {
           </Link>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {data.data?.map((course: any) => {
-          // ===== FACULTY =====
-          const facultyId =
-            course.relationships.field_faculty.data?.id;
+        {!data?.data || data.data.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No courses available at this time.</p>
+            <p className="text-gray-400 text-sm mt-2">Please check back later or contact administrator.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {data.data.map((course: any) => {
+              return (
+                <Link
+                  key={course.id}
+                  href={`/courses/${createSlug(course.attributes.title)}`}
+                  className="border-2 border-pink-200 rounded-xl p-4 shadow-lg hover:shadow-xl hover:scale-105 transition-all bg-white hover:border-pink-400 block"
+                >
+                  <h2 className="text-xl font-semibold mb-2 text-pink-600">
+                    {course.attributes.title}
+                  </h2>
 
-          const faculty = data.included?.find(
-            (inc: any) =>
-              inc.type === "node--faculty_" &&
-              inc.id === facultyId
-          );
+                  <p className="text-sm text-gray-600 mb-1">
+                    Code: {course.attributes.field_course_code || 'N/A'}
+                  </p>
 
-          // ===== DEPARTMENT =====
-          const deptId =
-            course.relationships.field_departments.data?.id;
+                  <p className="text-sm text-gray-600 mb-1">
+                    Credits: {course.attributes.field_credits || 'N/A'}
+                  </p>
 
-          const dept = data.included?.find(
-            (inc: any) =>
-              inc.type === "taxonomy_term--departments" &&
-              inc.id === deptId
-          );
-
-          return (
-            <Link
-              key={course.id}
-              href={`/courses/${createSlug(course.attributes.title)}`}
-              className="border-2 border-pink-200 rounded-xl p-4 shadow-lg hover:shadow-xl hover:scale-105 transition-all bg-white hover:border-pink-400 block"
-            >
-              <h2 className="text-xl font-semibold mb-2 text-pink-600">
-                {course.attributes.title}
-              </h2>
-
-              <p className="text-sm text-gray-600 mb-1">
-                Code: {course.attributes.field_course_code}
-              </p>
-
-              <p className="text-sm text-gray-600 mb-1">
-                Credits: {course.attributes.field_credits}
-              </p>
-
-              <p className="text-sm text-gray-500 mb-1">
-                Department: {dept?.attributes?.name}
-              </p>
-
-              <p className="text-sm text-blue-600 mt-1">
-                Faculty: {faculty?.attributes?.title}
-              </p>
-
-              <p className="text-xs text-pink-500 mt-2">
-                View Details →
-              </p>
-            </Link>
-          );
-        })}
-        </div>
+                  <p className="text-xs text-pink-500 mt-2">
+                    View Details →
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </main>
   );
