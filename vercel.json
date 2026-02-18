@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/proxy/drupal/(.*)",
-      "destination": "http://localhost:8080/drupal_headless/web/$1"
+      "destination": "https://amalia-stylistic-reese.ngrok-free.dev/drupal_headless/web/$1"
     }
   ]
 }
