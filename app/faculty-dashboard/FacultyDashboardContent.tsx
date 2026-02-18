@@ -26,8 +26,45 @@ async function getFacultyData() {
   }
 }
 
-export default async function FacultyDashboardContent() {
-  const data = await getFacultyData();
+export default function FacultyDashboardContent() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const facultyData = await getFacultyData();
+        setData(facultyData);
+      } catch (error) {
+        console.error("Error loading faculty dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Unable to load dashboard data.</p>
+        </div>
+      </div>
+    );
+  }
   
   const courseCount = data.courses?.data?.length || 0;
   const facultyCount = data.faculty?.data?.length || 0;
