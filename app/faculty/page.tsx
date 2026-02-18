@@ -12,6 +12,10 @@ async function getFacultyData() {
       fetch(`${DRUPAL_URL}/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
     ]);
 
+    if (!facultyRes.ok || !departmentsRes.ok) {
+      throw new Error('Failed to fetch data');
+    }
+
     const facultyData = await facultyRes.json();
     const departmentsData = await departmentsRes.json();
 
