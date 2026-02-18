@@ -1,11 +1,15 @@
-const DRUPAL_URL = "http://localhost:8080";
+"use client";
+
+import { useState, useEffect } from "react";
+
+const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
 async function getStudentData() {
   try {
     const [coursesRes, facultyRes, departmentsRes] = await Promise.all([
-      fetch(`${DRUPAL_URL}/drupal_headless/web/jsonapi/node/course`, { cache: "no-store" }),
-      fetch(`${DRUPAL_URL}/drupal_headless/web/jsonapi/node/faculty_`, { cache: "no-store" }),
-      fetch(`${DRUPAL_URL}/drupal_headless/web/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
+      fetch(`${DRUPAL_URL}/jsonapi/node/course`, { cache: "no-store" }),
+      fetch(`${DRUPAL_URL}/jsonapi/node/faculty_`, { cache: "no-store" }),
+      fetch(`${DRUPAL_URL}/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
     ]);
 
     return {
@@ -22,8 +26,45 @@ async function getStudentData() {
   }
 }
 
-export default async function StudentDashboardContent() {
-  const data = await getStudentData();
+export default function StudentDashboardContent() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const studentData = await getStudentData();
+        setData(studentData);
+      } catch (error) {
+        console.error("Error loading student dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Unable to load dashboard data.</p>
+        </div>
+      </div>
+    );
+  }
   
   const courseCount = data.courses?.data?.length || 0;
   const facultyCount = data.faculty?.data?.length || 0;
