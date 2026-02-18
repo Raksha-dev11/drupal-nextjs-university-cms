@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
@@ -17,10 +20,8 @@ async function getFacultyData() {
       departments: departmentsData,
     };
   } catch (error) {
-    return {
-      faculty: { data: [] },
-      departments: { data: [] },
-    };
+    console.error("Error fetching faculty data:", error);
+    return { faculty: { data: [] }, departments: { data: [] } };
   }
 }
 
