@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/proxy/drupal/(.*)",
+      "destination": "http://localhost:8080/drupal_headless/web/$1"
+    }
+  ]
+}

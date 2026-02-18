@@ -5,11 +5,16 @@ import Link from "next/link";
 
 const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
+// Use proxy in production, direct URL in development
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? '/api/proxy/drupal'
+  : DRUPAL_URL;
+
 async function getFacultyData() {
   try {
     const [facultyRes, departmentsRes] = await Promise.all([
-      fetch(`${DRUPAL_URL}/jsonapi/node/faculty_`, { cache: "no-store" }),
-      fetch(`${DRUPAL_URL}/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
+      fetch(`${API_BASE}/jsonapi/node/faculty_?include=field_photo,field_department`, { cache: "no-store" }),
+      fetch(`${API_BASE}/jsonapi/taxonomy_term/departments`, { cache: "no-store" }),
     ]);
 
     if (!facultyRes.ok || !departmentsRes.ok) {

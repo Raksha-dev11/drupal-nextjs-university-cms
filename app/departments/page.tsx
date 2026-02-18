@@ -5,13 +5,18 @@ import Link from "next/link";
 
 const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
+// Use proxy in production, direct URL in development
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? '/api/proxy/drupal'
+  : DRUPAL_URL;
+
 function createSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-");
 }
 
 async function getDepartments() {
   const res = await fetch(
-    `${DRUPAL_URL}/jsonapi/taxonomy_term/departments`,
+    `${API_BASE}/jsonapi/taxonomy_term/departments`,
     { cache: "no-store" }
   );
 
