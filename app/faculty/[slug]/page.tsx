@@ -95,7 +95,7 @@ export default function FacultyPage({
     );
   }
 
-  if (!facultyData || !facultyData.faculty) {
+  if (!facultyData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -105,9 +105,8 @@ export default function FacultyPage({
     );
   }
 
-  const faculty = facultyData.faculty;
-  const included = facultyData.included;
-  
+  const { faculty, included } = facultyData || { faculty: null, included: [] };
+
   const photoId = faculty.relationships.field_photo?.data?.id;
   const file = included?.find(
     (item: any) =>
