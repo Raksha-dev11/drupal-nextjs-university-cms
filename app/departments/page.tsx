@@ -1,6 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
-const DRUPAL_URL = "http://localhost:8080";
+const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
 function createSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-");
@@ -8,15 +11,52 @@ function createSlug(name: string) {
 
 async function getDepartments() {
   const res = await fetch(
-    `${DRUPAL_URL}/drupal_headless/web/jsonapi/taxonomy_term/departments`,
+    `${DRUPAL_URL}/jsonapi/taxonomy_term/departments`,
     { cache: "no-store" }
   );
 
   return res.json();
 }
 
-export default async function DepartmentsPage() {
-  const data = await getDepartments();
+export default function DepartmentsPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const departmentsData = await getDepartments();
+        setData(departmentsData);
+      } catch (error) {
+        console.error("Error loading departments data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading departments...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Unable to load departments data.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50">

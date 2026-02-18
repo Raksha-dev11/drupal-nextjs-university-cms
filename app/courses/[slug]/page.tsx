@@ -1,4 +1,8 @@
-const DRUPAL_URL = "http://localhost:8080";
+"use client";
+
+import React, { useState, useEffect } from "react";
+
+const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
 function createSlug(title: string) {
   return title
@@ -10,32 +14,59 @@ function createSlug(title: string) {
 
 async function getCourseBySlug(slug: string) {
   const res = await fetch(
-    `${DRUPAL_URL}/drupal_headless/web/jsonapi/node/course?include=field_faculty,field_departments`,
+    `${DRUPAL_URL}/jsonapi/node/course?include=field_faculty,field_departments`,
     { cache: "no-store" }
   );
 
-  const json = await res.json();
-
-  const course = json.data.find(
-    (item: any) =>
-      createSlug(item.attributes.title) === slug
-  );
-
-  return {
-    course,
-    included: json.included || [],
-  };
+  return res.json();
 }
 
-export default async function CourseDetailPage({
+export default function CourseDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const [courseData, setCourseData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const resolvedParams = React.use(params);
 
-  const { course, included } =
-    await getCourseBySlug(slug);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getCourseBySlug(resolvedParams.slug);
+        setCourseData(data);
+      } catch (error) {
+        console.error("Error loading course data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [resolvedParams.slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading course...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!courseData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Course not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { course, included } = courseData || { course: null, included: [] };
 
   if (!course) {
     return (
