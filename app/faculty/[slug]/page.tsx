@@ -1,6 +1,9 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
-const DRUPAL_URL = "http://localhost:8080";
+const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
 function createSlug(title: string) {
   return title
@@ -12,7 +15,7 @@ function createSlug(title: string) {
 
 async function getCourses() {
   const res = await fetch(
-    `http://localhost:8080/drupal_headless/web/jsonapi/node/course?include=field_faculty`,
+    `${DRUPAL_URL}/jsonapi/node/course?include=field_faculty`,
     { cache: "no-store" }
   );
 
@@ -21,40 +24,92 @@ async function getCourses() {
 
 async function getFacultyBySlug(slug: string) {
   const res = await fetch(
-    `${DRUPAL_URL}/drupal_headless/web/jsonapi/node/faculty_?include=field_photo`,
+    `${DRUPAL_URL}/jsonapi/node/faculty_?include=field_photo`,
     { cache: "no-store" }
   );
 
   const json = await res.json();
-
-  const faculty = json.data.find(
-    (item: any) =>
-      createSlug(item.attributes.title) === slug
-  );
-
-  return { faculty, included: json.included || [] };
+  return { faculty: json, included: json.included || [] };
 }
 
-export default async function FacultyPage({
+export default function FacultyPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const [facultyData, setFacultyData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const resolvedParams = React.use(params);
 
-  const { faculty, included } =
-    await getFacultyBySlug(slug);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getFacultyBySlug(resolvedParams.slug);
+        setFacultyData(data);
+        
+        const coursesData = await getCourses();
+        const faculty = data.faculty;
+        const included = data.included;
+        
+        const photoId = faculty.relationships.field_photo?.data?.id;
+        const file = included?.find(
+          (item: any) =>
+            item.type === "file--file" &&
+            item.id === photoId
+        );
 
-  const coursesData = await getCourses();
+        const imageUrl = file?.attributes?.uri?.url
+          ? `${DRUPAL_URL}${file.attributes.uri.url}`
+          : null;
 
-  if (!faculty) {
-    return <div>Faculty not found</div>;
+        const facultyCourses = coursesData.data.filter(
+          (course: any) => {
+            const facultyData = course.relationships?.field_faculty?.data;
+            if (!facultyData) return false;
+            
+            const facultyArray = Array.isArray(facultyData) ? facultyData : [facultyData];
+            return facultyArray.some((f: any) => f.id === faculty.id);
+          }
+        );
+        
+        // Update state with courses data
+        setFacultyData((prev: any) => ({ ...prev, facultyCourses }));
+      } catch (error) {
+        console.error("Error loading faculty data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [resolvedParams.slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading faculty profile...</p>
+        </div>
+      </div>
+    );
   }
 
-  const photoId =
-    faculty.relationships.field_photo.data?.id;
+  if (!facultyData || !facultyData.faculty) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Faculty not found</p>
+        </div>
+      </div>
+    );
+  }
 
-  const file = included.find(
+  const faculty = facultyData.faculty;
+  const included = facultyData.included;
+  
+  const photoId = faculty.relationships.field_photo?.data?.id;
+  const file = included?.find(
     (item: any) =>
       item.type === "file--file" &&
       item.id === photoId
@@ -64,12 +119,13 @@ export default async function FacultyPage({
     ? `${DRUPAL_URL}${file.attributes.uri.url}`
     : null;
 
-  const facultyCourses = coursesData.data.filter(
+  const facultyCourses = facultyData.facultyCourses || [];
+  const filteredCourses = facultyCourses.filter(
     (course: any) => {
-      const facultyData = course.relationships?.field_faculty?.data;
-      if (!facultyData) return false;
+      const courseFacultyData = course.relationships?.field_faculty?.data;
+      if (!courseFacultyData) return false;
       
-      const facultyArray = Array.isArray(facultyData) ? facultyData : [facultyData];
+      const facultyArray = Array.isArray(courseFacultyData) ? courseFacultyData : [courseFacultyData];
       return facultyArray.some((f: any) => f.id === faculty.id);
     }
   );
