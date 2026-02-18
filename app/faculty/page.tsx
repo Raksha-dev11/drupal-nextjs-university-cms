@@ -5,10 +5,8 @@ import Link from "next/link";
 
 const DRUPAL_URL = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL || "http://localhost:8080/drupal_headless/web";
 
-// Use proxy in production, direct URL in development
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? '/api/proxy/drupal'
-  : DRUPAL_URL;
+// Use direct URL for both dev and production (CORS is configured)
+const API_BASE = DRUPAL_URL;
 
 async function getFacultyData() {
   try {
