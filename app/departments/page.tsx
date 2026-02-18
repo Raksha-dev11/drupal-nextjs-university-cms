@@ -28,6 +28,11 @@ export default function DepartmentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('=== Environment Debug ===');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('DRUPAL_URL:', DRUPAL_URL);
+    console.log('API_BASE:', API_BASE);
+
     async function loadData() {
       try {
         const departmentsData = await getDepartments();
